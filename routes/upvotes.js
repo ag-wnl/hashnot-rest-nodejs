@@ -1,11 +1,11 @@
 import  express  from "express";
-import { getLikes, addLike, deleteLike } from "../controllers/upvote.js";
+import { getVotes, addVote, deleteVote } from "../controllers/upvote.js";
 
 
 const router = express.Router()
    
-router.get("/", getLikes)
-router.post("/", addLike)
-router.delete("/", deleteLike)
+router.get("/", getVotes)
+router.post("/", addVote)
+router.delete("/", deleteVote)
 
 export default router
