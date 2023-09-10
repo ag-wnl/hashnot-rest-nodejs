@@ -12,10 +12,10 @@ export const getVotes = (req, res) => {
 
 export const addVote = (req, res) => {
   const token = req.cookies.accessToken;
-  if (!token) return res.status(401).json("Not logged in!");
+  if (!token) return res.status(401).json("Login to add Upvote.");
 
   jwt.verify(token, "secretkey", (err, userInfo) => {
-    if (err) return res.status(403).json("Token is not valid!");
+    if (err) return res.status(403).json("Token is not valid, please login.");
 
     const q = "INSERT INTO upvotes (`userId`,`postId`) VALUES (?)";
     const values = [userInfo.id, req.body.postId];
