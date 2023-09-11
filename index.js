@@ -6,6 +6,7 @@ import postRoutes from "./routes/posts.js";
 import authRoutes from "./routes/auth.js";
 import messageRoutes from "./routes/messages.js";
 import upvoteRoutes from "./routes/upvotes.js";
+import relationRoutes from "./routes/relations.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
@@ -27,6 +28,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/upvotes", upvoteRoutes);
+app.use("/api/relations", relationRoutes);
 
 app.listen(8800, () => {
   console.log("API Active!");
