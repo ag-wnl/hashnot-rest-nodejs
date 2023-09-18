@@ -12,10 +12,6 @@ export const searchPosts = (req, res) => {
     jwt.verify(token, "secretkey", (err, userInfo) => {
         if(err) return res.status(403).json("Token is not valid.");
 
-        const x = `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp FROM posts AS p JOIN users AS u ON (u.id = p.userId)
-        LEFT JOIN relations AS r ON (p.userId = r.followedUserId) WHERE r.followerUserId= ? OR p.userId =?
-        ORDER BY p.createdAt DESC`;
-
         const q = "SELECT * FROM posts WHERE MATCH(title, `desc`) AGAINST (?) ORDER BY respect DESC";
 
         const values = [searchText];    

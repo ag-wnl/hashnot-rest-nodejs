@@ -5,19 +5,43 @@ import moment from "moment";
 export const getPosts = (req, res) => {
 
     const userId = req.query.userId;
-    const searchText = req.query.searchQuery;
+    const postSort = req.query.sort || "highest";
     const token = req.cookies.accessToken;
     if(!token) return res.status(401).json("Not Logged In.")
     
     jwt.verify(token, "secretkey", (err, userInfo) => {
         if(err) return res.status(403).json("Token is not valid.");
 
-        const q = 
-            (userId !== "undefined")
-            ?`SELECT p.*, u.id AS userId, name, username, pfp FROM posts AS p JOIN users AS u ON (u.id = p.userId) WHERE p.userId = ? ORDER BY p.createdAt DESC`
-            : `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp FROM posts AS p JOIN users AS u ON (u.id = p.userId)
-        LEFT JOIN relations AS r ON (p.userId = r.followedUserId) WHERE r.followerUserId= ? OR p.userId =?
-        ORDER BY p.createdAt DESC`;
+        let q;
+
+        if (userId !== "undefined") {
+            q = `SELECT p.*, u.id AS userId, name, username, pfp, 
+                
+                 FROM posts AS p 
+                 JOIN users AS u ON (u.id = p.userId) 
+                 LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
+                 WHERE p.userId = ?`;
+    
+            if (postSort === "recent") {
+                q += " ORDER BY p.createdAt DESC";
+            } else if (postSort === "highest") {
+                q += " GROUP BY p.id ORDER BY upvoteCount DESC";
+            }
+        } else {
+            q = `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp, 
+                (SELECT COUNT(*) FROM upvotes AS upv WHERE upv.postId = p.id) AS upvoteCount
+                 FROM posts AS p 
+                 JOIN users AS u ON (u.id = p.userId)
+                 LEFT JOIN relations AS r ON (p.userId = r.followedUserId) 
+                 LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
+                 WHERE r.followerUserId = ? OR p.userId = ?`;
+    
+            if (postSort === "recent") {
+                q += " ORDER BY p.createdAt DESC";
+            } else if (postSort === "highest") {
+                q += " GROUP BY p.id ORDER BY upvoteCount DESC";
+            }
+        }
 
         const values = (userId !== "undefined") ? [userId] : [userInfo.id, userInfo.id];    
         db.query(q, values, (err, data) => {
