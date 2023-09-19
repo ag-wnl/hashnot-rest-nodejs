@@ -5,7 +5,7 @@ import moment from "moment";
 export const getPosts = (req, res) => {
 
     const userId = req.query.userId;
-    const postSort = req.query.sort || "highest";
+    const postSort = (req.query.sort === undefined) ? "highest" : req.query.sort;   
     const token = req.cookies.accessToken;
     if(!token) return res.status(401).json("Not Logged In.")
     
@@ -15,9 +15,9 @@ export const getPosts = (req, res) => {
         let q;
 
         if (userId !== "undefined") {
-            q = `SELECT p.*, u.id AS userId, name, username, pfp, 
-                
-                 FROM posts AS p 
+            q = `SELECT p.*, u.id AS userId, name, username, pfp,
+                (SELECT COUNT(*) FROM upvotes AS upv WHERE upv.postId = p.id) AS upvoteCount
+                 FROM posts AS p    
                  JOIN users AS u ON (u.id = p.userId) 
                  LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
                  WHERE p.userId = ?`;
@@ -59,13 +59,14 @@ export const addPost = (req, res) => {
     jwt.verify(token, "secretkey", (err, userInfo) => {
         if(err) return res.status(403).json("Token is not valid.");
 
-        const q = "INSERT INTO posts (`title`, `desc`, `img`, `createdAt`, `userID`) VALUES (?)";
+        const q = "INSERT INTO posts (`title`, `desc`, `img`, `createdAt`, `userID`, `skills`) VALUES (?)";
         const values = [
             req.body.title,
             req.body.desc,
             req.body.img,
             moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
-            userInfo.id
+            userInfo.id,
+            req.body.skills
         ]
 
         db.query(q, [values], (err, data) => {
