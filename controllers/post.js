@@ -6,6 +6,8 @@ export const getPosts = (req, res) => {
 
     const userId = req.query.userId;
     const postSort = (req.query.sort === undefined) ? "highest" : req.query.sort;   
+    const postObjective = req.query.objective;
+
     const token = req.cookies.accessToken;
     if(!token) return res.status(401).json("Not Logged In.")
     
@@ -21,12 +23,31 @@ export const getPosts = (req, res) => {
                  JOIN users AS u ON (u.id = p.userId) 
                  LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
                  WHERE p.userId = ?`;
-    
+
+
+            if (req.query.objective === "Hackathon") {
+                q += " AND p.objective = 'Hackathon'";
+            } else if (req.query.objective === "Project") {
+                q += " AND p.objective = 'Project'";
+            }
+
+            // checking for domains selected by user
+            if (req.query.domains) {
+                const domainsArray = req.query.domains.split(',');
+                const domainConditions = domainsArray.map((domain) => {
+                    return `FIND_IN_SET('${domain}', p.domain)`;
+                }).join(' AND ');
+        
+                q += ` AND (${domainConditions})`;
+            }
+
+            // checking for sorting selected by user
             if (postSort === "recent") {
                 q += " ORDER BY p.createdAt DESC";
             } else if (postSort === "highest") {
                 q += " GROUP BY p.id ORDER BY upvoteCount DESC";
             }
+
         } else {
             q = `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp, 
                 (SELECT COUNT(*) FROM upvotes AS upv WHERE upv.postId = p.id) AS upvoteCount
@@ -34,8 +55,25 @@ export const getPosts = (req, res) => {
                  JOIN users AS u ON (u.id = p.userId)
                  LEFT JOIN relations AS r ON (p.userId = r.followedUserId) 
                  LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
-                 WHERE r.followerUserId = ? OR p.userId = ?`;
-    
+                 WHERE (r.followerUserId = ? OR p.userId = ?)`;
+
+            if (req.query.objective === "Hackathon") {
+                q += " AND p.objective = 'Hackathon'";
+            } else if (req.query.objective === "Project") {
+                q += " AND p.objective = 'Project'";
+            }
+            
+            // checking for domains selected by user
+            if (req.query.domains) {
+                const domainsArray = req.query.domains.split(',');  
+                const domainConditions = domainsArray.map((domain) => {
+                    return `FIND_IN_SET('${domain}', p.domain)`;
+                }).join(' AND ');
+        
+                q += ` AND (${domainConditions})`;
+            }
+            
+            // checking for sorting selected by user
             if (postSort === "recent") {
                 q += " ORDER BY p.createdAt DESC";
             } else if (postSort === "highest") {
@@ -59,14 +97,17 @@ export const addPost = (req, res) => {
     jwt.verify(token, "secretkey", (err, userInfo) => {
         if(err) return res.status(403).json("Token is not valid.");
 
-        const q = "INSERT INTO posts (`title`, `desc`, `img`, `createdAt`, `userID`, `skills`) VALUES (?)";
+        const q = "INSERT INTO posts (`title`, `desc`, `img`, `createdAt`, `userID`, `skills`, `objective`, `team_size`, `domain`) VALUES (?)";
         const values = [
             req.body.title,
             req.body.desc,
             req.body.img,
             moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
             userInfo.id,
-            req.body.skills
+            req.body.skills,
+            req.body.objective,
+            req.body.sliderValue,
+            req.body.domainString
         ]
 
         db.query(q, [values], (err, data) => {
