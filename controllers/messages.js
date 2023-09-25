@@ -21,17 +21,32 @@ export const addMessages = (req, res) => {
     jwt.verify(token, "secretkey", (err, userInfo) => {
         if(err) return res.status(403).json("Token is not valid.");
 
-        const q = "INSERT INTO postdm (`desc`,`createdAt`, `userId`, `postId`) VALUES (?)";
-        const values = [
-            req.body.desc,
-            moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
-            userInfo.id,
-            req.body.postId
-        ]
+        const checkQuery = "SELECT * FROM postdm WHERE userId = ? AND postId = ?";
+        const checkValues = [userInfo.id, req.body.postId];
 
-        db.query(q, [values], (err, data) => {
-            if(err) return res.status(500).json(err);
-            return res.status(200).json("Message has been sent!");
-        });
+        db.query(checkQuery, checkValues, (checkErr, checkData) => {
+            if(checkErr) {
+                return res.status(500).json(checkErr);
+            }
+
+            if(checkData.length > 0) {
+                //user already has sent a message for this post
+                return res.status(400).json("You can only send one message per post.");
+            } else {
+
+                const q = "INSERT INTO postdm (`desc`,`createdAt`, `userId`, `postId`) VALUES (?)";
+                const values = [
+                    req.body.desc,
+                    moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
+                    userInfo.id,
+                    req.body.postId
+                ]
+        
+                db.query(q, [values], (err, data) => {
+                    if(err) return res.status(500).json(err);
+                    return res.status(200).json("Message has been sent!");
+                });      
+            }
+        })
     });
 };

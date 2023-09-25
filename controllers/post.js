@@ -6,7 +6,7 @@ export const getPosts = (req, res) => {
 
     const userId = req.query.userId;
     const postSort = (req.query.sort === undefined) ? "highest" : req.query.sort;   
-    const postObjective = req.query.objective;
+    const teamSize = req.query.teamSize;
 
     const token = req.cookies.accessToken;
     if(!token) return res.status(401).json("Not Logged In.")
@@ -25,28 +25,28 @@ export const getPosts = (req, res) => {
                  WHERE p.userId = ?`;
 
 
-            if (req.query.objective === "Hackathon") {
-                q += " AND p.objective = 'Hackathon'";
-            } else if (req.query.objective === "Project") {
-                q += " AND p.objective = 'Project'";
-            }
+            // if (req.query.objective === "Hackathon") {
+            //     q += " AND p.objective = 'Hackathon'";
+            // } else if (req.query.objective === "Project") {
+            //     q += " AND p.objective = 'Project'";
+            // }
 
-            // checking for domains selected by user
-            if (req.query.domains) {
-                const domainsArray = req.query.domains.split(',');
-                const domainConditions = domainsArray.map((domain) => {
-                    return `FIND_IN_SET('${domain}', p.domain)`;
-                }).join(' AND ');
+            // // checking for domains selected by user
+            // if (req.query.domains) {
+            //     const domainsArray = req.query.domains.split(',');
+            //     const domainConditions = domainsArray.map((domain) => {
+            //         return `FIND_IN_SET('${domain}', p.domain)`;
+            //     }).join(' AND ');
         
-                q += ` AND (${domainConditions})`;
-            }
+            //     q += ` AND (${domainConditions})`;
+            // }
 
             // checking for sorting selected by user
-            if (postSort === "recent") {
-                q += " ORDER BY p.createdAt DESC";
-            } else if (postSort === "highest") {
-                q += " GROUP BY p.id ORDER BY upvoteCount DESC";
-            }
+            // if (postSort === "recent") {
+            //     q += " ORDER BY p.createdAt DESC";
+            // } else if (postSort === "highest") {
+            //     q += " GROUP BY p.id ORDER BY upvoteCount DESC";
+            // }
 
         } else {
             q = `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp, 
@@ -61,6 +61,10 @@ export const getPosts = (req, res) => {
                 q += " AND p.objective = 'Hackathon'";
             } else if (req.query.objective === "Project") {
                 q += " AND p.objective = 'Project'";
+            }
+
+            if(teamSize != 1) {
+                q += ` AND p.team_size = ${teamSize}`;
             }
             
             // checking for domains selected by user
