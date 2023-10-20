@@ -24,30 +24,6 @@ export const getPosts = (req, res) => {
                  LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
                  WHERE p.userId = ?`;
 
-
-            // if (req.query.objective === "Hackathon") {
-            //     q += " AND p.objective = 'Hackathon'";
-            // } else if (req.query.objective === "Project") {
-            //     q += " AND p.objective = 'Project'";
-            // }
-
-            // // checking for domains selected by user
-            // if (req.query.domains) {
-            //     const domainsArray = req.query.domains.split(',');
-            //     const domainConditions = domainsArray.map((domain) => {
-            //         return `FIND_IN_SET('${domain}', p.domain)`;
-            //     }).join(' AND ');
-        
-            //     q += ` AND (${domainConditions})`;
-            // }
-
-            // checking for sorting selected by user
-            // if (postSort === "recent") {
-            //     q += " ORDER BY p.createdAt DESC";
-            // } else if (postSort === "highest") {
-            //     q += " GROUP BY p.id ORDER BY upvoteCount DESC";
-            // }
-
         } else {
             q = `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp, 
                 (SELECT COUNT(*) FROM upvotes AS upv WHERE upv.postId = p.id) AS upvoteCount
@@ -88,6 +64,7 @@ export const getPosts = (req, res) => {
         const values = (userId !== "undefined") ? [userId] : [userInfo.id, userInfo.id];    
         db.query(q, values, (err, data) => {
             if(err) return res.status(500).json(err);
+
             return res.status(200).json(data);
         });
     });

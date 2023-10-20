@@ -8,6 +8,7 @@ import messageRoutes from "./routes/messages.js";
 import upvoteRoutes from "./routes/upvotes.js";
 import relationRoutes from "./routes/relations.js";
 import searchRoutes from "./routes/search.js";
+import LinkPreviews from "./routes/linkprev.js"
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
@@ -31,6 +32,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/upvotes", upvoteRoutes);
 app.use("/api/relations", relationRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/urlprev", LinkPreviews);
 
 app.listen(8800, () => {
   console.log("API Active!");
