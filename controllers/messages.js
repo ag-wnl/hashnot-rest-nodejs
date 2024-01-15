@@ -4,6 +4,7 @@ import moment from "moment";
 
 export const getMessages = (req, res) => {
 
+    //user can only see messages they send, not all messages
     const q = `SELECT c.*, u.id AS userId, name, pfp FROM postdm AS c JOIN users AS u ON (u.id = c.userId) WHERE c.postId = ? ORDER BY c.createdAt DESC`;
 
     db.query(q, [req.query.postId], (err, data) => {
@@ -13,6 +14,7 @@ export const getMessages = (req, res) => {
 
 };
 
+//Currently only allowing 1 message per user for a post
 export const addMessages = (req, res) => {
 
     const token = req.cookies.accessToken;
@@ -30,10 +32,9 @@ export const addMessages = (req, res) => {
             }
 
             if(checkData.length > 0) {
-                //user already has sent a message for this post
+                //user already has sent 1 message for this post
                 return res.status(400).json("You can only send one message per post.");
             } else {
-
                 const q = "INSERT INTO postdm (`desc`,`createdAt`, `userId`, `postId`) VALUES (?)";
                 const values = [
                     req.body.desc,
