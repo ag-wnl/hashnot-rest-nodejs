@@ -10,7 +10,8 @@ import relationRoutes from "./routes/relations.js";
 import searchRoutes from "./routes/search.js";
 import LinkPreviews from "./routes/linkprev.js"
 import hackathonRoutes from "./routes/hackathonFinder.js"
-import cookieParser from "cookie-parser";
+import showRequestRoutes from "./routes/showRequest.js"
+import cookieParser from "cookie-parser";   
 import cors from "cors";
 
 //middlewares:
@@ -35,6 +36,7 @@ app.use("/api/relations", relationRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/urlprev", LinkPreviews);
 app.use("/api/hackathon", hackathonRoutes);
+app.use("/api/showrequest", showRequestRoutes);
 
 app.listen(8800, () => {
   console.log("API Active!");
