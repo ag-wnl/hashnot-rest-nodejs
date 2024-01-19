@@ -1,6 +1,6 @@
 import  express  from "express";
 import { getRelations, addRelations, deleteRelations } from "../controllers/relation.js";
-
+import {verifyFirebaseToken} from "../middleware/firebaseAuthMiddleware.js"
 
 const router = express.Router()
    

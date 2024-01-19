@@ -12,7 +12,7 @@ export const getRequests = (req, res) => {
     jwt.verify(token, "secretkey", (err, userInfo) => {
         if(err) return res.status(403).json("Token is not valid.");
         
-        const q = `SELECT posts.title, postdm.desc, postdm.userId, postdm.postId, postdm.createdAt
+        const q = `SELECT posts.title, postdm.desc, postdm.userId, postdm.postId, postdm.createdAt  
         FROM postdm
         JOIN posts ON postdm.postId = posts.id
         WHERE posts.userId = ?`;

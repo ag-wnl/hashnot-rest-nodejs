@@ -1,58 +1,59 @@
 import { db } from "../connect.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import {initializeApp} from "firebase/app";
+import admin from "firebase-admin";
+import credentials from "../serviceAccountKey.json" assert { type: "json" };
+  
 
-export const register = (req, res) => {
-    //CHECK USER IF EXISTS
-  
-    const q = "SELECT * FROM users WHERE username = ?";
-  
-    db.query(q, [req.body.username], (err, data) => {
-      if (err) return res.status(500).json(err);
-      if (data.length) return res.status(409).json("User already exists!");
-      //CREATE A NEW USER
-      //Hash the password
-      const salt = bcrypt.genSaltSync(10);
-      const hashedPassword = bcrypt.hashSync(req.body.password, salt);
-  
-      const q =
-        "INSERT INTO users (`username`,`email`,`password`,`name`) VALUE (?)";
-  
-      const values = [
+admin.initializeApp({
+  credential: admin.credential.cert(credentials),
+});
+
+export const register = async (req, res) => {
+  try {
+    
+    //Creating User on Firebase Authentication:
+    const userResponse = await admin.auth().createUser({
+      email: req.body.email,
+      password: req.body.password,
+      // emailVerified: false,
+      // disabled: false,
+    });
+    const uid = userResponse.uid;
+
+    //Storing user information in Database:
+    const q = "INSERT INTO users (`accountUserId`,`username`,`email`,`name`) VALUE (?)";
+
+    const values = [
+        uid,
         req.body.username,
         req.body.email,
-        hashedPassword,
         req.body.name,
-      ];
-  
-      db.query(q, [values], (err, data) => {
-        if (err) return res.status(500).json(err);
-        return res.status(200).json("User has been created.");
-      });
+    ];
+
+    db.query(q, [values], (err, data) => {
+      if (err) return res.status(500).json(err);
     });
-  };
 
-export const login = (req, res) => {
-  
-  const q = "SELECT * FROM users WHERE username = ?"
-  db.query(q, [req.body.username], (err, data) => {
-    if(err) return res.status(500).json(err);
-    if(data.length === 0) return res.status(404).json("user not found.");
+    res.status(200).json("User has been created in Authentication Server!");
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
 
-    const checkPassword = bcrypt.compareSync(req.body.password, data[0].password)
+export const login = async (req , res) => {
+  try {
+    const userRecord = await admin.auth().getUserByEmail(req.body.email);
 
-    if(!checkPassword) return res.status(400).json("Incorrect Password or username.")
-
-    //to confirm user : jwt token on sign in
-    const token = jwt.sign({id: data[0].id}, "secretkey");
-
-    //seperating password from userdata so password isnt sent
-    const {password, ...others} = data[0]
-
+    const token = jwt.sign({ uid: userRecord.uid }, "secretkey");
     res.cookie("accessToken", token, {
       httpOnly: true,
-    }).status(200).json(others);
-  });
+    }).status(200).json({ uid: userRecord.uid, email: userRecord.email });  
+  
+  } catch(error) {
+    res.status(500).json(error);  
+  }
 };
 
 export const logout = (req, res) => {
