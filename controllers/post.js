@@ -7,61 +7,45 @@ export const getPosts = (req, res) => {
     const userId = req.query.userId;
     const postSort = (req.query.sort === undefined) ? "highest" : req.query.sort;   
     const teamSize = req.query.teamSize;
-
     let q;
-    if (userId !== "undefined") {
-        q = `SELECT p.*, u.id AS userId, name, username, pfp,
-            (SELECT COUNT(*) FROM upvotes AS upv WHERE upv.postId = p.id) AS upvoteCount
-            FROM posts AS p    
-            JOIN users AS u ON (u.id = p.userId) 
-            LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
-            WHERE p.userId = ?`;
 
-    } else {
-        //based on followers:
-        // `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp, 
-        //     (SELECT COUNT(*) FROM upvotes AS upv WHERE upv.postId = p.id) AS upvoteCount
-        //     FROM posts AS p 
-        //     JOIN users AS u ON (u.id = p.userId)
-        //     LEFT JOIN relations AS r ON (p.userId = r.followedUserId) 
-        //     LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
-        //     WHERE (r.followerUserId = ? OR p.userId = ?)`
-
-        q = `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp, 
+    q = `SELECT DISTINCT p.*, u.id AS userId, name, username, pfp, 
             (SELECT COUNT(*) FROM upvotes AS upv WHERE upv.postId = p.id) AS upvoteCount
             FROM posts AS p 
             JOIN users AS u ON (u.id = p.userId)
-            LEFT JOIN upvotes AS upv ON (p.id = upv.postId)`;
+            LEFT JOIN relations AS r ON (p.userId = r.followedUserId) 
+            LEFT JOIN upvotes AS upv ON (p.id = upv.postId)
+            WHERE (r.followerUserId = ? OR p.userId = ?)`;  
 
-        if (req.query.objective === "Hackathon") {
-            q += " AND p.objective = 'Hackathon'";
-        } else if (req.query.objective === "Project") {
-            q += " AND p.objective = 'Project'";
-        }
-
-        if(teamSize != 1) {
-            q += ` AND p.team_size = ${teamSize}`;
-        }
-        
-        // checking for domains selected by user
-        if (req.query.domains) {
-            const domainsArray = req.query.domains.split(',');  
-            const domainConditions = domainsArray.map((domain) => {
-                return `FIND_IN_SET('${domain}', p.domain)`;
-            }).join(' AND ');
-    
-            q += ` AND (${domainConditions})`;
-        }
-        
-        // checking for sorting selected by user
-        if (postSort === "recent") {
-            q += " ORDER BY p.createdAt DESC";
-        } else if (postSort === "highest") {
-            q += " GROUP BY p.id ORDER BY upvoteCount DESC";
-        }
+    if (req.query.objective === "Hackathon") {
+        q += " AND p.objective = 'Hackathon'";
+    } else if (req.query.objective === "Project") {
+        q += " AND p.objective = 'Project'";
     }
 
-    const values = (userId !== "undefined") ? [userId] : [];    
+    if(teamSize !== undefined && teamSize !== "1" && !isNaN(teamSize)) {
+        q += ` AND p.team_size = ${teamSize}`;
+    }
+    
+    // checking for domains selected by user
+    if (req.query.domains && req.query.domains !== undefined) {
+        const domainsArray = req.query.domains.split(',');  
+        const domainConditions = domainsArray.map((domain) => {
+            return `FIND_IN_SET('${domain}', p.domain)`;
+        }).join(' AND ');
+
+        q += ` AND (${domainConditions})`;
+    }
+    
+    // checking for sorting selected by user
+    if (postSort === "recent") {
+        q += " ORDER BY p.createdAt DESC";
+    } else if (postSort === "highest") {
+        q += " GROUP BY p.id ORDER BY upvoteCount DESC";
+    }
+    
+    //(userId !== "undefined") ? [] : 
+    const values = [userId, userId];    
     db.query(q, values, (err, data) => {
         if(err) return res.status(500).json(err);
 
@@ -69,6 +53,8 @@ export const getPosts = (req, res) => {
     });
     
 };
+
+
 
 export const addPost = (req, res) => {
     const q = "INSERT INTO posts (`title`, `desc`, `img`, `createdAt`, `userID`, `skills`, `objective`, `team_size`, `domain`) VALUES (?)";
@@ -78,7 +64,7 @@ export const addPost = (req, res) => {
         req.body.desc,
         req.body.img,
         moment(Date.now()).format("YYYY-MM-DD HH:mm:ss"),
-        userInfo.id,
+        req.body.userId,
         req.body.skills,
         req.body.objective,
         req.body.sliderValue,

@@ -4,8 +4,8 @@ import {verifyFirebaseToken} from "../middleware/firebaseAuthMiddleware.js"
 
 const router = express.Router()
    
-router.get("/", getRelations)
-router.post("/", addRelations)
-router.delete("/", deleteRelations)
+router.get("/", verifyFirebaseToken, getRelations)
+router.post("/", verifyFirebaseToken, addRelations)
+router.delete("/", verifyFirebaseToken, deleteRelations)
 
 export default router

@@ -5,26 +5,18 @@ import moment from "moment";
 export const getRequests = (req, res) => {
 
     const userId = req.query.userId;
+    const q = `SELECT posts.title, postdm.desc, postdm.userId, postdm.postId, postdm.createdAt  
+    FROM postdm
+    JOIN posts ON postdm.postId = posts.id
+    WHERE posts.userId = ?`;
 
-    const token = req.cookies.accessToken;
-    if(!token) return res.status(401).json("Not Logged In.")
-    
-    jwt.verify(token, "secretkey", (err, userInfo) => {
-        if(err) return res.status(403).json("Token is not valid.");
-        
-        const q = `SELECT posts.title, postdm.desc, postdm.userId, postdm.postId, postdm.createdAt  
-        FROM postdm
-        JOIN posts ON postdm.postId = posts.id
-        WHERE posts.userId = ?`;
+    const values = [userId];
 
-        const values = [userId];
+    db.query(q, values, (err, data) => {
+        if(err) {
+            return res.status(500).json(err);
+        }
 
-        db.query(q, values, (err, data) => {
-            if(err) {
-                return res.status(500).json(err);
-            }
-
-            return res.status(200).json(data);
-        });
+        return res.status(200).json(data);
     });
 };
