@@ -1,12 +1,30 @@
 import {db} from "../connect.js";
+import {
+	RegExpMatcher,
+	TextCensor,
+	englishDataset,
+	englishRecommendedTransformers,
+} from 'obscenity';
 
-//This is fetching post details from DB and returning data to get request
+//TODO: make this search algorithm more efficient:
 export const searchPosts = (req, res) => {
 
-    const searchText = req.query.q;
-    const q = "SELECT * FROM posts WHERE MATCH(title, `desc`) AGAINST (?) ORDER BY respect DESC";
+    const obscenityMatcher = new RegExpMatcher({
+        ...englishDataset.build(),
+        ...englishRecommendedTransformers,
+    });
 
-    const values = [searchText];    
+    const searchText = req.query.q;
+
+    if (obscenityMatcher.hasMatch(searchText)) {
+        return res.status(400).json({ 
+            error: 'Search query is unacceptable according to platform guidelines. Cannot perform the search.' 
+        });
+    }
+
+    const q = "SELECT * FROM posts WHERE title LIKE ? OR `desc` LIKE ? ORDER BY respect DESC";
+    const values = [`%${searchText}%`, `%${searchText}%`];   
+
     db.query(q, values, (err, data) => {
         if(err) return res.status(500).json(err);
         return res.status(200).json(data);
