@@ -11,13 +11,11 @@ import hackathonRoutes from "./routes/hackathonFinder.js"
 import showRequestRoutes from "./routes/showRequest.js"
 import cookieParser from "cookie-parser";   
 import cors from "cors";
-
-import http from "http";
-import { WebSocketServer } from "ws"; 
+import credentials from "./serviceAccountKey.json"  assert { type: "json" };
+import {initializeApp} from "firebase/app";
+import admin from "firebase-admin";
 
 const app = express();
-const server = http.createServer(app);
-const wss =  new WebSocketServer({ server });
 
 //middlewares, CORS stuff:
 app.use((req, res, next) => {
@@ -34,6 +32,10 @@ app.use(
 app.use(cookieParser());
 
 
+admin.initializeApp({
+  credential: admin.credential.cert(credentials),
+});
+
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/auth", authRoutes);
@@ -45,35 +47,9 @@ app.use("/api/urlprev", LinkPreviews);
 app.use("/api/hackathon", hackathonRoutes);
 app.use("/api/showrequest", showRequestRoutes);
 
-wss.on("headers", (headers, req) => {
-  cors()(req, null, () => {
-    headers.push("Access-Control-Allow-Credentials: true");
-    headers.push("Access-Control-Allow-Origin: http://localhost:3000");
-  })
-})
+const SERVER_PORT = 8800;
 
-wss.on("connection", (ws) => {
-  console.log("someone connected");
-
-  ws.on("message", (message) => {
-    console.log("recieved: ", message);
-    ws.send(`Hi, here you go: ${message}`);
-  });
-
-  ws.on("close", () => {
-    console.log("connection closed"); 
-  });
-
-  ws.on("error", (error) => {
-    console.error("WebSocket error:", error);
-  });
+app.listen(SERVER_PORT, () => {
+  console.log(`API Active on Port : ${SERVER_PORT}`);
 });
 
-app.listen(8800, () => {
-  console.log("API Active!");
-});
-
-const serverPort = 6565;
-server.listen(serverPort, () => {
-  console.log(`Web socket listening on port: ${serverPort}`);
-})

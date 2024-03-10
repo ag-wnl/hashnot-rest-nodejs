@@ -1,35 +1,32 @@
 import { db } from "../connect.js";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import {initializeApp} from "firebase/app";
 import admin from "firebase-admin";
-import credentials from "../serviceAccountKey.json" assert { type: "json" };
-  
 
-admin.initializeApp({
-  credential: admin.credential.cert(credentials),
-});
 
 export const register = async (req, res) => {
+  const userEmail = req.body.email;
+  const userAccountId = req.body.userAccountId;
+  const userAccountName = req.body.name;
+  const userName = req.body.username;
   try {
     
-    //Creating User on Firebase Authentication:
-    const userResponse = await admin.auth().createUser({
-      email: req.body.email,
-      password: req.body.password,
-      // emailVerified: false,
-      // disabled: false,
-    });
-    const uid = userResponse.uid;
+  //   //Creating User on Firebase Authentication:
+  //   const userResponse = await admin.auth().createUser({
+  //     email: userEmail,
+  //     password: userPassword,
+  //     emailVerified: false,
+  //     disabled: false,
+  //   });
+  //   const uid = userResponse.uid;
 
     //Storing user information in Database:
     const q = "INSERT INTO users (`accountUserId`,`username`,`email`,`name`) VALUE (?)";
 
     const values = [
-        uid,
-        req.body.username,
-        req.body.email,
-        req.body.name,
+      userAccountId,
+      userName,
+      userEmail,
+      userAccountName,
     ];
 
     db.query(q, [values], (err, data) => {
@@ -37,6 +34,7 @@ export const register = async (req, res) => {
     });
 
     res.status(200).json("User has been created in Authentication Server!");
+  
   } catch (error) {
     res.status(500).json(error);
   }
@@ -55,6 +53,7 @@ export const login = async (req , res) => {
     res.status(500).json(error);  
   }
 };
+
 
 export const logout = (req, res) => {
     res.clearCookie("accessToken", {
