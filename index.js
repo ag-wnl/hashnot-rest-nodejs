@@ -9,6 +9,7 @@ import searchRoutes from "./routes/search.js";
 import LinkPreviews from "./routes/linkprev.js"
 import hackathonRoutes from "./routes/hackathonFinder.js"
 import showRequestRoutes from "./routes/showRequest.js"
+import chatRoutes from "./routes/chat.js"
 import cookieParser from "cookie-parser";   
 import cors from "cors";
 import credentials from "./serviceAccountKey.json"  assert { type: "json" };
@@ -46,6 +47,8 @@ app.use("/api/search", searchRoutes);
 app.use("/api/urlprev", LinkPreviews);
 app.use("/api/hackathon", hackathonRoutes);
 app.use("/api/showrequest", showRequestRoutes);
+app.use("/api/chats", chatRoutes);
+
 
 const SERVER_PORT = 8800;
 

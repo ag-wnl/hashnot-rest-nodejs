@@ -5,9 +5,10 @@ import moment from "moment";
 export const getRequests = (req, res) => {
 
     const userId = req.query.userId;
-    const q = `SELECT posts.title, postdm.desc, postdm.userId, postdm.postId, postdm.createdAt  
+    const q = `SELECT posts.title, postdm.desc, postdm.userId, users.name, users.pfp, postdm.postId, postdm.createdAt  
     FROM postdm
     JOIN posts ON postdm.postId = posts.id
+    JOIN users ON postdm.userId = users.id
     WHERE posts.userId = ?`;
 
     const values = [userId];

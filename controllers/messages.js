@@ -1,5 +1,4 @@
 import { db } from "../connect.js";
-import jwt from "jsonwebtoken";
 import moment from "moment";
 
 export const getMessages = (req, res) => {
@@ -24,8 +23,8 @@ export const addMessages = (req, res) => {
             return res.status(500).json(checkErr);
         }
 
-        if(checkData.length > 0) {
-            //user already has sent 1 message for this post
+        if(checkData.length > 5) {
+            //user already has sent 5 message for this post
             return res.status(400).json("You can only send one message per post.");
         } else {
             const q = "INSERT INTO postdm (`desc`,`createdAt`, `userId`, `postId`) VALUES (?)";

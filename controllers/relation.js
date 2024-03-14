@@ -31,7 +31,7 @@ export const deleteRelations = (req, res) => {
   const followerUserId = req.query.curUserId;
   const followedUserId = req.query.userId;
 
-  const q = "DELETE FROM relations WHERE `FollowerUserId` = ? AND `followedUserId` = ?";
+  const q = "DELETE FROM relations WHERE `followerUserId` = ? AND `followedUserId` = ?";
 
   db.query(q, [followerUserId, followedUserId], (err, data) => {
     if (err) return res.status(500).json(err);
