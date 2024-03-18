@@ -2,7 +2,7 @@ import admin from "firebase-admin";
 
 export const verifyFirebaseToken = async (req, res, next) => {
     const idToken = req.headers.authorization;
-  
+
     if (!idToken) {
       return res.status(401).json({ status: 'error', message: 'Unauthorized - Token missing' });
     }

@@ -40,8 +40,8 @@ export const getChats = (req, res) => {
     const userTwo = req.query.secondUser;
 
     const q = `
-        SELECT chats.*, users.name, users.username
-        FROM chats
+        SELECT chats.*, users.name, users.username, users.pfp
+        FROM chats  
         INNER JOIN users ON chats.from = users.id
         WHERE (chats.to = ? AND chats.from = ?) OR (chats.to = ? AND chats.from = ?);
     `;
